@@ -4,9 +4,10 @@ setlocal enabledelayedexpansion
 title [GUARDIÃO DO PING - SISTEMA TENDÃO]
 color 0A
 
+set "IPDESTINO=8.8.8.8"
+set "OSCILACOES=0"
 set "FALHAS=0"
 set "RECONEXOES=0"
-set "IPDESTINO=8.8.8.8"
 set "ssid="
 
 call :GetSSID
@@ -25,6 +26,7 @@ if !errorlevel! EQU 0 (
     if !errorlevel! EQU 0 (
         echo ^| [~] Oscilação detectada, mas recuperou   ^|
         set FALHAS=0
+        set /a OSCILACOES+=1
     ) else (
         set /a FALHAS+=1
         echo ^|   [X] Falha #!FALHAS!                               ^| 
@@ -49,8 +51,9 @@ goto loop
     echo +----------------------------------------------+
     echo ^| Rede atual.........: !ssid!          ^|
     echo ^| Monitorando........: !IPDESTINO!                 ^|
-    echo ^| Reconexões.........: !RECONEXOES!                       ^|
+    echo ^| Oscilações.........: !OSCILACOES!                      ^|
     echo ^| Falhas consecutivas: !FALHAS!                       ^|
+    echo ^| Reconexões.........: !RECONEXOES!                       ^|
     echo ^| Hora atual.........: !time:~0,8!                ^|
     echo +----------------------------------------------+
     echo ^| Status:                                      ^| 
@@ -81,3 +84,4 @@ goto :eof
     )
     for /f "tokens=* delims= " %%a in ("!ssid!") do set "ssid=%%a"
 goto :eof
+
