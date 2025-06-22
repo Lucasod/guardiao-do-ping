@@ -15,13 +15,13 @@ call :GetSSID
 cls
 call :MostraInfo
 
-ping -n 1 -w 300 !IPDESTINO! | findstr /i "TTL=" >nul
+call :PingComTimeout 300
 
 if !errorlevel! EQU 0 (
     echo ^|   [✓] Conexao OK                             ^| 
     set FALHAS=0
 ) else (
-    ping -n 1 -w 800 !IPDESTINO! | findstr /i "TTL=" >nul
+    call :PingComTimeout 800
     if !errorlevel! EQU 0 (
         echo ^| [~] Oscilação detectada, mas recuperou   ^|
         set FALHAS=0
@@ -54,6 +54,12 @@ goto loop
     echo ^| Hora atual.........: !time:~0,8!                ^|
     echo +----------------------------------------------+
     echo ^| Status:                                      ^| 
+goto :eof
+
+:PingComTimeout
+    setlocal
+    set "timeout=%~1"
+    ping -n 1 -w !timeout! !IPDESTINO! >nul    
 goto :eof
 
 :AutoReconectar
