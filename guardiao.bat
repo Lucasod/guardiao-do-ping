@@ -74,7 +74,7 @@ goto :eof
     echo ^|    - Reconectando a "!ssid!"...
     netsh wlan connect name="!ssid!" >nul
     echo ^|    - Reconexao concluída!
-    timeout /t 2 >nul
+    timeout /t 10 >nul
 goto :eof
 
 :GetSSID
