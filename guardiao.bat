@@ -79,5 +79,5 @@ goto :eof
     for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID"') do (
         set ssid=%%a
     )
-    for /f "tokens=* delims= " %%a in ("!ssid!") do set "ssid=%%a
+    for /f "tokens=* delims= " %%a in ("!ssid!") do set "ssid=%%a"
 goto :eof
