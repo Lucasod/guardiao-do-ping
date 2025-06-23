@@ -10,42 +10,52 @@ set "FALHAS=0"
 set "RECONEXOES=0"
 set "ssid="
 
-call :GetSSID
-
 :loop
 cls
 call :MostraInfo
 
-call :PingComTimeout 300
-
-if !errorlevel! EQU 0 (
-    echo ^|   [✓] Conexao OK                             ^| 
-    set FALHAS=0
-) else (
-    call :PingComTimeout 800
-    if !errorlevel! EQU 0 (
-        echo ^| [~] Oscilação detectada, mas recuperou   ^|
-        set FALHAS=0
-        set /a OSCILACOES+=1
-    ) else (
-        set /a FALHAS+=1
-        echo ^|   [X] Falha #!FALHAS!                               ^| 
-    )
-)
-
-if !FALHAS! GEQ 1 (
-    echo +----------------------------------------------+
-    echo ^| [⚠] !FALHAS!  falhas detectadas. Iniciando reconexão...
-    call :AutoReconectar
-    set /a RECONEXOES+=1
-    set FALHAS=0
-)
+call :VerificaConexao
 
 echo +==============================================+
 timeout /t 1 >nul
 goto loop
 
-:MostraInfo    
+:VerificaConexao
+    call :PingComTimeout 300
+
+    if !errorlevel! EQU 0 (
+        echo ^|   [✓] Conexao OK                             ^| 
+        set FALHAS=0
+    ) else (
+        call :PingComTimeout 800
+        if !errorlevel! EQU 0 (
+            echo ^| [~] Oscilação detectada, mas recuperou   ^|
+            set FALHAS=0
+            set /a OSCILACOES+=1
+        ) else (
+            set /a OSCILACOES+=1
+            set /a FALHAS+=1
+        )
+    )
+
+    if !OSCILACOES! GEQ 3 (
+        call :VerificaFalha 
+    )    
+goto :eof
+
+:VerificaFalha
+    if !FALHAS! GEQ 3 (
+        echo +----------------------------------------------+
+        echo ^| [⚠] !FALHAS! falhas detectadas. Iniciando reconexão...
+        call :AutoReconectar
+        set /a RECONEXOES+=1
+        set FALHAS=0
+    )
+goto :eof
+
+
+:MostraInfo
+    call :GetSSID    
     echo +==============================================+
     echo ^|     ⚔️  GUARDIÃO DO PING - SISTEMA TENDÃO™   ^|
     echo +----------------------------------------------+
@@ -66,7 +76,16 @@ goto :eof
 goto :eof
 
 :AutoReconectar
+    set "ssid_anterior=!ssid!"
     call :GetSSID
+
+    if /i "!ssid!" NEQ "!ssid_anterior!" (
+        echo ^|    - ⚠️ Rede está trocando: "!ssid_anterior!" → "!ssid!"
+        echo ^|    - Aguardando estabilização antes de qualquer ação...
+        timeout /t 10 >nul
+        goto :eof
+    )
+
     echo ^|    - Rede detectada: !ssid!
     echo ^|    - Desconectando...
     netsh wlan disconnect >nul
@@ -78,7 +97,6 @@ goto :eof
 goto :eof
 
 :GetSSID
-    echo ^| ► Detectando nome da rede atual...
     for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID"') do (
         set ssid=%%a
     )
