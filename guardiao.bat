@@ -56,7 +56,7 @@ goto :eof
         call :AutoReconectar
         set /a RECONEXOES+=1
         set FALHAS=0
-         set OSCILACOES=0    )
+        set OSCILACOES=0   
     )
 goto :eof
 
