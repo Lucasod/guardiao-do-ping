@@ -3,6 +3,7 @@
 Um script de monitoramento de conexão para Windows, criado em `.bat`, com detecção de falhas, reconexão automática via Wi-Fi, e verificação inteligente para evitar falsos positivos.
 
 > Ideal para manter a estabilidade em ambientes instáveis, automatizando a detecção e reconexão de rede.
+> Para quem sofre com redes que só voltam a funcionar após reconectar.
 
 ---
 
