@@ -4,15 +4,9 @@ setlocal enabledelayedexpansion
 title [GUARDIÃO DO PING - SISTEMA TENDÃO]
 color 0A
 
-set "IPDESTINO=8.8.8.8"
-set "OSCILACOES=0"
-set "FALHAS=0"
-set "RECONEXOES=0"
-set "ssid="
+call :DefineVariaveis
 
 :loop
-cls
-call :MostraInfo
 
 call :VerificaConexao
 
@@ -20,7 +14,17 @@ echo +==============================================+
 timeout /t 1 >nul
 goto loop
 
+:DefineVariaveis
+    set "IPDESTINO=8.8.8.8"
+    set "OSCILACOES=0"
+    set "FALHAS=0"
+    set "RECONEXOES=0"
+    set "ssid="
+goto :eof
+
 :VerificaConexao
+    cls
+    call :MostraInfo
     call :PingComTimeout 300
 
     if !errorlevel! EQU 0 (
@@ -52,7 +56,6 @@ goto :eof
         set FALHAS=0
     )
 goto :eof
-
 
 :MostraInfo
     call :GetSSID    
