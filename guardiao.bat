@@ -12,6 +12,7 @@ call :VerificaConexao
 
 echo +==============================================+
 timeout /t 1 >nul
+cls
 goto loop
 
 :DefineVariaveis
@@ -20,18 +21,19 @@ goto loop
     set "FALHAS=0"
     set "RECONEXOES=0"
     set "ssid="
+    set "TIMEOUTMINIMO=300"
+    set "TIMEOUTMAXIMO=800"
 goto :eof
 
-:VerificaConexao
-    cls
+:VerificaConexao    
     call :MostraInfo
-    call :PingComTimeout 300
+    call :PingComTimeout !TIMEOUTMINIMO!
 
     if !errorlevel! EQU 0 (
         echo ^|   [✓] Conexao OK                             ^| 
         set FALHAS=0
     ) else (
-        call :PingComTimeout 800
+        call :PingComTimeout !TIMEOUTMAXIMO!
         if !errorlevel! EQU 0 (
             echo ^| [~] Oscilação detectada, mas recuperou   ^|
             set FALHAS=0
@@ -54,6 +56,7 @@ goto :eof
         call :AutoReconectar
         set /a RECONEXOES+=1
         set FALHAS=0
+         set OSCILACOES=0    )
     )
 goto :eof
 
@@ -75,7 +78,8 @@ goto :eof
 :PingComTimeout
     setlocal
     set "timeout=%~1"
-    ping -n 1 -w !timeout! !IPDESTINO! >nul    
+    ping -n 1 -w !timeout! !IPDESTINO! >nul
+    endlocal    
 goto :eof
 
 :AutoReconectar
@@ -95,13 +99,18 @@ goto :eof
     timeout /t 2 >nul
     echo ^|    - Reconectando a "!ssid!"...
     netsh wlan connect name="!ssid!" >nul
-    echo ^|    - Reconexao concluída!
+    if !errorlevel! neq 0 (
+        echo ^|    - Erro ao reconectar à "!ssid!"!
+    ) else (
+        echo ^|    - Reconexao concluída!
+    )
     timeout /t 10 >nul
 goto :eof
 
 :GetSSID
-    for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID"') do (
-        set ssid=%%a
+    set "ssid="
+    for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID" ^| findstr /V "BSSID"') do (
+        if not defined ssid set "ssid=%%a"
     )
     for /f "tokens=* delims= " %%a in ("!ssid!") do set "ssid=%%a"
 goto :eof
