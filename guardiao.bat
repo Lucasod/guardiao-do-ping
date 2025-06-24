@@ -8,12 +8,8 @@ call :DefineVariaveis
 
 :loop
 
-call :MostraInfo
-call :VerificaConexao
-
-echo +==============================================+
-timeout /t 1 >nul
-cls
+call :IniciaGuardiao
+ 
 goto loop
 
 :DefineVariaveis
@@ -24,6 +20,35 @@ goto loop
     set "ssid="
     set "TIMEOUTMINIMO=300"
     set "TIMEOUTMAXIMO=800"
+goto :eof
+
+:IniciaGuardiao
+    call :MostraInfo
+    call :VerificaConexao
+    call :MostraFimLinha
+goto :eof
+
+:MostraInfo
+    call :PegaSSID    
+    echo +==============================================+
+    echo ^|     ⚔️  GUARDIÃO DO PING - SISTEMA TENDÃO™   ^|
+    echo +----------------------------------------------+
+    echo ^| Rede atual.........: !ssid!          ^|
+    echo ^| Monitorando........: !IPDESTINO!                 ^|
+    echo ^| Oscilações.........: !OSCILACOES!                      ^|
+    echo ^| Falhas consecutivas: !FALHAS!                       ^|
+    echo ^| Reconexões.........: !RECONEXOES!                       ^|
+    echo ^| Hora atual.........: !time:~0,8!                ^|
+    echo +----------------------------------------------+
+    echo ^| Status:                                      ^| 
+goto :eof
+
+:PegaSSID
+    set "ssid="
+    for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID" ^| findstr /V "BSSID"') do (
+        if not defined ssid set "ssid=%%a"
+    )
+    for /f "tokens=* delims= " %%a in ("!ssid!") do set "ssid=%%a"
 goto :eof
 
 :VerificaConexao        
@@ -49,6 +74,13 @@ goto :eof
     )    
 goto :eof
 
+:PingComTimeout
+    setlocal
+    set "timeout=%~1"
+    ping -n 1 -w !timeout! !IPDESTINO! >nul
+    endlocal    
+goto :eof
+
 :VerificaFalha
     if !FALHAS! GEQ 3 (
         echo +----------------------------------------------+
@@ -60,28 +92,6 @@ goto :eof
     )
 goto :eof
 
-:MostraInfo
-    call :PegaSSID    
-    echo +==============================================+
-    echo ^|     ⚔️  GUARDIÃO DO PING - SISTEMA TENDÃO™   ^|
-    echo +----------------------------------------------+
-    echo ^| Rede atual.........: !ssid!          ^|
-    echo ^| Monitorando........: !IPDESTINO!                 ^|
-    echo ^| Oscilações.........: !OSCILACOES!                      ^|
-    echo ^| Falhas consecutivas: !FALHAS!                       ^|
-    echo ^| Reconexões.........: !RECONEXOES!                       ^|
-    echo ^| Hora atual.........: !time:~0,8!                ^|
-    echo +----------------------------------------------+
-    echo ^| Status:                                      ^| 
-goto :eof
-
-:PingComTimeout
-    setlocal
-    set "timeout=%~1"
-    ping -n 1 -w !timeout! !IPDESTINO! >nul
-    endlocal    
-goto :eof
-
 :AutoReconectar
     set "ssid_anterior=!ssid!"
     call :PegaSSID
@@ -91,6 +101,12 @@ goto :eof
     )
 
     call :ReconectaRede    
+goto :eof
+
+:AguardaTrocaRede
+    echo ^|    - ⚠️ Rede está trocando: "!ssid_anterior!" → "!ssid!"
+    echo ^|    - Aguardando estabilização antes de qualquer ação...
+    timeout /t 10 >nul
 goto :eof
 
 :ReconectaRede
@@ -108,17 +124,8 @@ goto :eof
     timeout /t 10 >nul
 goto :eof
 
-:AguardaTrocaRede
-    echo ^|    - ⚠️ Rede está trocando: "!ssid_anterior!" → "!ssid!"
-    echo ^|    - Aguardando estabilização antes de qualquer ação...
-    timeout /t 10 >nul
+:MostraFimLinha
+    echo +==============================================+
+    timeout /t 1 >nul
+    cls
 goto :eof
-
-:PegaSSID
-    set "ssid="
-    for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID" ^| findstr /V "BSSID"') do (
-        if not defined ssid set "ssid=%%a"
-    )
-    for /f "tokens=* delims= " %%a in ("!ssid!") do set "ssid=%%a"
-goto :eof
-
