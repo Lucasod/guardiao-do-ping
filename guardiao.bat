@@ -8,9 +8,10 @@ call :IniciaScript
 
 :IniciaScript
     call :DefineVariaveis
+
     :loop
         call :IniciaGuardiao    
-    goto loop
+    goto loop    
 goto :eof
 
 :DefineVariaveis
