@@ -8,6 +8,7 @@ call :DefineVariaveis
 
 :loop
 
+call :MostraInfo
 call :VerificaConexao
 
 echo +==============================================+
@@ -25,8 +26,7 @@ goto loop
     set "TIMEOUTMAXIMO=800"
 goto :eof
 
-:VerificaConexao    
-    call :MostraInfo
+:VerificaConexao        
     call :PingComTimeout !TIMEOUTMINIMO!
 
     if !errorlevel! EQU 0 (
