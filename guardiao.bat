@@ -61,7 +61,7 @@ goto :eof
 goto :eof
 
 :MostraInfo
-    call :GetSSID    
+    call :PegaSSID    
     echo +==============================================+
     echo ^|     ⚔️  GUARDIÃO DO PING - SISTEMA TENDÃO™   ^|
     echo +----------------------------------------------+
@@ -84,15 +84,16 @@ goto :eof
 
 :AutoReconectar
     set "ssid_anterior=!ssid!"
-    call :GetSSID
+    call :PegaSSID
 
     if /i "!ssid!" NEQ "!ssid_anterior!" (
-        echo ^|    - ⚠️ Rede está trocando: "!ssid_anterior!" → "!ssid!"
-        echo ^|    - Aguardando estabilização antes de qualquer ação...
-        timeout /t 10 >nul
-        goto :eof
+       call :AguardaTrocaRede
     )
 
+    call :ReconectaRede    
+goto :eof
+
+:ReconectaRede
     echo ^|    - Rede detectada: !ssid!
     echo ^|    - Desconectando...
     netsh wlan disconnect >nul
@@ -107,7 +108,13 @@ goto :eof
     timeout /t 10 >nul
 goto :eof
 
-:GetSSID
+:AguardaTrocaRede
+    echo ^|    - ⚠️ Rede está trocando: "!ssid_anterior!" → "!ssid!"
+    echo ^|    - Aguardando estabilização antes de qualquer ação...
+    timeout /t 10 >nul
+goto :eof
+
+:PegaSSID
     set "ssid="
     for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID" ^| findstr /V "BSSID"') do (
         if not defined ssid set "ssid=%%a"
