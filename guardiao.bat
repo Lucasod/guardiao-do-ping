@@ -4,13 +4,14 @@ setlocal enabledelayedexpansion
 title [GUARDIÃO DO PING - SISTEMA TENDÃO]
 color 0A
 
-call :DefineVariaveis
+call :IniciaScript
 
-:loop
-
-call :IniciaGuardiao
- 
-goto loop
+:IniciaScript
+    call :DefineVariaveis
+    :loop
+        call :IniciaGuardiao    
+    goto loop
+goto :eof
 
 :DefineVariaveis
     set "IPDESTINO=8.8.8.8"
