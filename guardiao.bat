@@ -15,13 +15,15 @@ call :IniciaScript
 goto :eof
 
 :DefineVariaveis
-    set "IPDESTINO=8.8.8.8"
+    set "IP_DESTINO=8.8.8.8"
     set "OSCILACOES=0"
     set "FALHAS=0"
     set "RECONEXOES=0"
-    set "ssid="
-    set "TIMEOUTMINIMO=300"
-    set "TIMEOUTMAXIMO=800"
+    set "SSID="    
+    set "SSID_ANTERIOR="    
+    set "ULTIMA_SSID_OK="
+    set "TIMEOUT_MINIMO=300"
+    set "TIMEOUT_MAXIMO=800"
 goto :eof
 
 :IniciaGuardiao
@@ -33,36 +35,37 @@ goto :eof
 :MostraInfo
     call :PegaSSID    
     echo +==============================================+
-    echo ^|     ⚔️  GUARDIÃO DO PING - SISTEMA TENDÃO™   ^|
+    echo ^|     ⚔️  GUARDIÃO DO PING - SISTEMA TENDÃO™   
     echo +----------------------------------------------+
-    echo ^| Rede atual.........: !ssid!          ^|
-    echo ^| Monitorando........: !IPDESTINO!                 ^|
-    echo ^| Oscilações.........: !OSCILACOES!                      ^|
-    echo ^| Falhas consecutivas: !FALHAS!                       ^|
-    echo ^| Reconexões.........: !RECONEXOES!                       ^|
-    echo ^| Hora atual.........: !time:~0,8!                ^|
+    echo ^| Rede atual.........: !SSID!
+    echo ^| Monitorando........: !IP_DESTINO!
+    echo ^| Oscilações.........: !OSCILACOES!
+    echo ^| Falhas consecutivas: !FALHAS!
+    echo ^| Reconexões.........: !RECONEXOES!
+    echo ^| Hora atual.........: !time:~0,8!
     echo +----------------------------------------------+
-    echo ^| Status:                                      ^| 
+    echo ^| Status:                                       
 goto :eof
 
 :PegaSSID
-    set "ssid="
+    set "SSID="
     for /f "tokens=2 delims=:" %%a in ('netsh wlan show interfaces ^| findstr /C:" SSID" ^| findstr /V "BSSID"') do (
-        if not defined ssid set "ssid=%%a"
+        if not defined ssid set "SSID=%%a"
     )
-    for /f "tokens=* delims= " %%a in ("!ssid!") do set "ssid=%%a"
+    for /f "tokens=* delims= " %%a in ("!SSID!") do set "SSID=%%a"
 goto :eof
 
 :VerificaConexao        
-    call :PingComTimeout !TIMEOUTMINIMO!
+    call :PingComTimeout !TIMEOUT_MINIMO!
 
     if !errorlevel! EQU 0 (
-        echo ^|   [✓] Conexao OK                             ^| 
+        echo ^|   [✓] Conexao OK                              
         set FALHAS=0
+        set ULTIMA_SSID_OK=!SSID!
     ) else (
-        call :PingComTimeout !TIMEOUTMAXIMO!
+        call :PingComTimeout !TIMEOUT_MAXIMO!
         if !errorlevel! EQU 0 (
-            echo ^| [~] Oscilação detectada, mas recuperou   ^|
+            echo ^| [~] Oscilação detectada, mas recuperou   
             set FALHAS=0
             set /a OSCILACOES+=1
         ) else (
@@ -79,7 +82,7 @@ goto :eof
 :PingComTimeout
     setlocal
     set "timeout=%~1"
-    ping -n 1 -w !timeout! !IPDESTINO! >nul
+    ping -n 1 -w !timeout! !IP_DESTINO! >nul
     endlocal    
 goto :eof
 
@@ -95,10 +98,10 @@ goto :eof
 goto :eof
 
 :AutoReconectar
-    set "ssid_anterior=!ssid!"
+    set "SSID_ANTERIOR=!SSID!"
     call :PegaSSID
 
-    if /i "!ssid!" NEQ "!ssid_anterior!" (
+    if /i "!SSID!" NEQ "!SSID_ANTERIOR!" (
        call :AguardaTrocaRede
     )
 
@@ -106,22 +109,45 @@ goto :eof
 goto :eof
 
 :AguardaTrocaRede
-    echo ^|    - ⚠️ Rede está trocando: "!ssid_anterior!" → "!ssid!"
-    echo ^|    - Aguardando estabilização antes de qualquer ação...
+    echo ^|    - ⚠️ Rede está trocando: "!SSID_ANTERIOR!" → "!SSID!" 
+    echo ^|    - Aguardando estabilização antes de qualquer ação... 
     timeout /t 10 >nul
 goto :eof
 
 :ReconectaRede
-    echo ^|    - Rede detectada: !ssid!
-    echo ^|    - Desconectando...
-    netsh wlan disconnect >nul
-    timeout /t 2 >nul
-    echo ^|    - Reconectando a "!ssid!"...
-    netsh wlan connect name="!ssid!" >nul
-    if !errorlevel! neq 0 (
-        echo ^|    - Erro ao reconectar à "!ssid!"!
+    echo ^|    - Rede detectada: !SSID!
+    if "!SSID!"=="" (
+        if "!ULTIMA_SSID_OK!"=="" (
+            echo ^|    - Nenhuma SSID funcional salva para reconectar! 
+        ) else (
+            echo ^|    - SSID vazia! Tentando reconectar na última SSID funcional: !ULTIMA_SSID_OK!
+            netsh wlan connect name="!ULTIMA_SSID_OK!" >nul
+            if !errorlevel! neq 0 (
+                echo ^|    - Erro ao reconectar à "!ULTIMA_SSID_OK!"!
+            ) else (
+                echo ^|    - Reconexao concluída em "!ULTIMA_SSID_OK!"!
+            )
+        )
     ) else (
-        echo ^|    - Reconexao concluída!
+        echo ^|    - Desconectando...
+        netsh wlan disconnect >nul
+        timeout /t 2 >nul
+        echo ^|    - Reconectando a "!SSID!"...
+        netsh wlan connect name="!SSID!" >nul
+        if !errorlevel! neq 0 (
+            echo ^|    - Erro ao reconectar à "!SSID!"!
+            if not "!ULTIMA_SSID_OK!"=="" (
+                echo ^|    - Tentando reconectar na última SSID funcional: !ULTIMA_SSID_OK!
+                netsh wlan connect name="!ULTIMA_SSID_OK!" >nul
+                if !errorlevel! neq 0 (
+                    echo ^|    - Erro ao reconectar à "!ULTIMA_SSID_OK!"!
+                ) else (
+                    echo ^|    - Reconexao concluída em "!ULTIMA_SSID_OK!"!
+                )
+            )
+        ) else (
+            echo ^|    - Reconexao concluída!
+        )
     )
     timeout /t 10 >nul
 goto :eof
